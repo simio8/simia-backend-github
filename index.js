@@ -9,18 +9,25 @@ const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fet
 
 dotenv.config();
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
+
+// Cambia esta URL por la de tu backend en Render
+const BASE_URL = 'https://simia-backend.onrender.com';
 
 app.use(cors());
 app.use(bodyParser.json());
 app.use('/imagenes', express.static(path.join(__dirname, 'imagenes')));
+
+// Ruta raíz para confirmar que el servidor está activo
+app.get('/', (req, res) => {
+  res.send('Servidor de Simia Backend funcionando correctamente ✅');
+});
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 app.post('/generate-image', async (req, res) => {
   const { prompt, formato = 'cuadrado', calidad = 'standard' } = req.body;
 
-  // Tamaño según formato (ajustable si se desea más adelante)
   let size;
   switch (formato) {
     case 'vertical':
@@ -35,7 +42,6 @@ app.post('/generate-image', async (req, res) => {
       break;
   }
 
-  // Calidad de imagen
   const calidadFormato = calidad === 'alta' ? 'hd' : 'standard';
 
   try {
@@ -50,20 +56,20 @@ app.post('/generate-image', async (req, res) => {
 
     const imageUrl = response.data[0].url;
 
-    // Descargar y guardar la imagen localmente
+    // Descargar imagen
     const imageRes = await fetch(imageUrl);
     const buffer = await imageRes.arrayBuffer();
     const fileName = `img_${Date.now()}.png`;
     const filePath = path.join(__dirname, 'imagenes', fileName);
     fs.writeFileSync(filePath, Buffer.from(buffer));
 
-    // Registrar en banco de imágenes
+    // Guardar en banco de imágenes
     const bancoPath = path.join(__dirname, 'banco.json');
     const banco = fs.existsSync(bancoPath) ? JSON.parse(fs.readFileSync(bancoPath)) : [];
 
     const imageEntry = {
       prompt,
-      url: `http://localhost:${port}/imagenes/${fileName}`,
+      url: `${BASE_URL}/imagenes/${fileName}`,
       formato,
       calidad
     };
@@ -86,5 +92,5 @@ app.get('/banco-imagenes', (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Servidor corriendo en http://localhost:${port}`);
+  console.log(`Servidor corriendo en puerto ${port}`);
 });
