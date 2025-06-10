@@ -1,4 +1,25 @@
-// ... (importaciones y configuración igual)
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const fs = require('fs');
+const path = require('path');
+const fetch = require('node-fetch');
+const { OpenAI } = require('openai');
+
+require('dotenv').config();
+
+const app = express();
+const port = process.env.PORT || 3000;
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
+
+app.use(cors());
+app.use(bodyParser.json());
+
+// 🔥 LÍNEA CLAVE para servir imágenes desde la carpeta "imagenes"
+app.use('/imagenes', express.static(path.join(__dirname, 'imagenes')));
 
 app.post('/generate-image', async (req, res) => {
   const { prompt, formato = 'cuadrado', calidad = 'standard' } = req.body;
@@ -37,7 +58,7 @@ app.post('/generate-image', async (req, res) => {
     const bancoPath = path.join(__dirname, 'banco.json');
     const banco = fs.existsSync(bancoPath) ? JSON.parse(fs.readFileSync(bancoPath)) : [];
 
-    // CORREGIDO: usar host dinámico
+    // ✅ Usar URL pública en Render
     const host = req.get('host');
     const protocol = req.protocol;
     const finalUrl = `${protocol}://${host}/imagenes/${fileName}`;
@@ -66,7 +87,7 @@ app.get('/banco-imagenes', (req, res) => {
   res.json(data);
 });
 
-// NUEVO: Para que Render muestre algo en la raíz /
+// 🌐 Página principal de prueba
 app.get('/', (req, res) => {
   res.send('✅ Simia backend está activo');
 });
