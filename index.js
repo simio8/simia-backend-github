@@ -3,7 +3,6 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
-const fetch = require('node-fetch');
 const { OpenAI } = require('openai');
 
 require('dotenv').config();
@@ -18,11 +17,16 @@ const openai = new OpenAI({
 app.use(cors());
 app.use(bodyParser.json());
 
-// 🔥 LÍNEA CLAVE para servir imágenes desde la carpeta "imagenes"
+// 🔥 Sirve las imágenes desde la carpeta "imagenes"
 app.use('/imagenes', express.static(path.join(__dirname, 'imagenes')));
 
 app.post('/generate-image', async (req, res) => {
   const { prompt, formato = 'cuadrado', calidad = 'standard' } = req.body;
+
+  // ✅ Validar prompt
+  if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
+    return res.status(400).json({ error: 'Prompt inválido' });
+  }
 
   let size;
   switch (formato) {
@@ -49,6 +53,8 @@ app.post('/generate-image', async (req, res) => {
     });
 
     const imageUrl = response.data[0].url;
+
+    // ✅ Usar fetch nativo en Node.js v18+
     const imageRes = await fetch(imageUrl);
     const buffer = await imageRes.arrayBuffer();
     const fileName = `img_${Date.now()}.png`;
@@ -56,9 +62,11 @@ app.post('/generate-image', async (req, res) => {
     fs.writeFileSync(filePath, Buffer.from(buffer));
 
     const bancoPath = path.join(__dirname, 'banco.json');
-    const banco = fs.existsSync(bancoPath) ? JSON.parse(fs.readFileSync(bancoPath)) : [];
+    const banco = fs.existsSync(bancoPath)
+      ? JSON.parse(fs.readFileSync(bancoPath))
+      : [];
 
-    // ✅ Usar URL pública en Render
+    // ✅ Usar URL pública de Render
     const host = req.get('host');
     const protocol = req.protocol;
     const finalUrl = `${protocol}://${host}/imagenes/${fileName}`;
@@ -87,7 +95,6 @@ app.get('/banco-imagenes', (req, res) => {
   res.json(data);
 });
 
-// 🌐 Página principal de prueba
 app.get('/', (req, res) => {
   res.send('✅ Simia backend está activo');
 });
