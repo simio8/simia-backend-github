@@ -5,7 +5,9 @@ const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
 const fs = require('fs');
 const path = require('path');
+const multer = require('multer');
 const { OpenAI } = require('openai');
+const Replicate = require('replicate');
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 dotenv.config();
@@ -17,26 +19,22 @@ app.use(bodyParser.json());
 app.use('/imagenes', express.static(path.join(__dirname, 'imagenes')));
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN });
 
+const upload = multer({ storage: multer.memoryStorage() });
+
+// === Ruta: Generar imagen desde texto ===
 app.post('/generate-image', async (req, res) => {
   const { prompt, formato = 'cuadrado', calidad = 'standard' } = req.body;
 
-  // Tamaño según formato (ajustable si se desea más adelante)
   let size;
   switch (formato) {
-    case 'vertical':
-      size = '1024x1792';
-      break;
-    case 'horizontal':
-      size = '1792x1024';
-      break;
+    case 'vertical': size = '1024x1792'; break;
+    case 'horizontal': size = '1792x1024'; break;
     case 'cuadrado':
-    default:
-      size = '1024x1024';
-      break;
+    default: size = '1024x1024'; break;
   }
 
-  // Calidad de imagen
   const calidadFormato = calidad === 'alta' ? 'hd' : 'standard';
 
   try {
@@ -50,15 +48,12 @@ app.post('/generate-image', async (req, res) => {
     });
 
     const imageUrl = response.data[0].url;
-
-    // Descargar y guardar la imagen localmente
     const imageRes = await fetch(imageUrl);
     const buffer = await imageRes.arrayBuffer();
     const fileName = `img_${Date.now()}.png`;
     const filePath = path.join(__dirname, 'imagenes', fileName);
     fs.writeFileSync(filePath, Buffer.from(buffer));
 
-    // Registrar en banco de imágenes
     const bancoPath = path.join(__dirname, 'banco.json');
     const banco = fs.existsSync(bancoPath) ? JSON.parse(fs.readFileSync(bancoPath)) : [];
 
@@ -79,11 +74,34 @@ app.post('/generate-image', async (req, res) => {
   }
 });
 
+// === Ruta: Galería de imágenes generadas ===
 app.get('/banco-imagenes', (req, res) => {
   const bancoPath = path.join(__dirname, 'banco.json');
   if (!fs.existsSync(bancoPath)) return res.json([]);
   const data = JSON.parse(fs.readFileSync(bancoPath));
   res.json(data);
+});
+
+// === Ruta: Mejorar nitidez usando Replicate ===
+app.post('/mejorar-imagen', upload.single('imagen'), async (req, res) => {
+  try {
+    const imageBuffer = req.file.buffer;
+    const base64Image = `data:image/jpeg;base64,${imageBuffer.toString('base64')}`;
+
+    const output = await replicate.run("sczhou/codeformer:8b6dbe1", {
+      input: {
+        image: base64Image,
+        codeformer_fidelity: 1,
+        face_upsample: true,
+        upscale: 2
+      }
+    });
+
+    res.json({ imageUrl: output });
+  } catch (error) {
+    console.error('Error en /mejorar-imagen:', error);
+    res.status(500).json({ error: 'Error al procesar imagen con Replicate' });
+  }
 });
 
 app.listen(port, () => {
