@@ -1,0 +1,78 @@
+[
+  {
+    "prompt": "lata de gaseosa con el logo ia simia, color naranja y sabor naranja, fria, provocativa, en un desierto y en 3d",
+    "url": "http://localhost:3000/imagenes/img_1749172843047.png",
+    "formato": "cuadrado",
+    "calidad": "estandar"
+  },
+  {
+    "prompt": "Atardecer en la playa con colores cálidos y cielo despejado, arena dorada, palmeras suaves movidas por el viento, reflejos del sol en el agua, estilo fotográfico ultra realista, luz dorada suave, resolución alta, formato vertical",
+    "url": "http://localhost:3000/imagenes/img_1749157370125.png",
+    "formato": "cuadrado",
+    "calidad": "estandar"
+  },
+  {
+    "prompt": "texto simia en estilo grafiti y neon 3d y textura de pared muy colorida",
+    "url": "http://localhost:3000/imagenes/img_1749147550258.png",
+    "formato": "cuadrado",
+    "calidad": "estandar"
+  },
+  {
+    "prompt": "un dinosaurio en 3d con textura de cocodrilo o largarto en la piel",
+    "url": "http://localhost:3000/imagenes/img_1749047840956.png",
+    "formato": "cuadrado",
+    "calidad": "estandar"
+  },
+  {
+    "prompt": "paisaje de una playa con palmeras y mar azul aguamarina",
+    "url": "http://localhost:3000/imagenes/img_1748981440634.png",
+    "formato": "cuadrado",
+    "calidad": "estandar"
+  },
+  {
+    "prompt": "naranja chorreada de miel sin pelar en 3d con una abejita sobre ella",
+    "url": "http://localhost:3000/imagenes/img_1748932247471.png",
+    "formato": "cuadrado",
+    "calidad": "estandar"
+  },
+  {
+    "prompt": "Una mujer con cabello hecho de nubes flotando sobre un mar de tinta, colores suaves",
+    "url": "http://localhost:3000/imagenes/img_1748931634765.png",
+    "formato": "cuadrado",
+    "calidad": "estandar"
+  },
+  {
+    "prompt": "Una hamburguesa en 3D flotando con capas suspendidas en el aire, fondo blanco",
+    "url": "http://localhost:3000/imagenes/img_1748930693294.png",
+    "formato": "cuadrado",
+    "calidad": "estandar"
+  },
+  {
+    "prompt": "Un niño astronauta en 3D jugando con un perro robot en la luna, estilo Pixar",
+    "url": "http://localhost:3000/imagenes/img_1748927841062.png",
+    "formato": "vertical",
+    "calidad": "standard"
+  },
+  {
+    "prompt": "Una ilustración vertical de un castillo flotante al atardecer, con cascadas cayendo hacia las nubes, estilo fantasía épica, colores cálidos, detalle alto",
+    "url": "http://localhost:3000/imagenes/img_1748927500115.png",
+    "formato": "horizontal",
+    "calidad": "standard"
+  },
+  {
+    "prompt": " un simio pintando en un estudio futurista",
+    "url": "http://localhost:3000/imagenes/img_1748918687475.png"
+  },
+  {
+    "prompt": "Un paisaje surrealista con montañas flotantes y neblina púrpura",
+    "url": "http://localhost:3000/imagenes/img_1748917365920.png"
+  },
+  {
+    "prompt": "Una banana pelándose que revela un universo digital, fondo violeta",
+    "url": "http://localhost:3000/imagenes/img_1748916535839.png"
+  },
+  {
+    "prompt": "Una rana en patineta por el espacio",
+    "url": "http://localhost:3000/imagenes/img_1748911101661.png"
+  }
+]
