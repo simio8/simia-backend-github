@@ -1,13 +1,12 @@
-// Cambio forzado para que Render detecte el redeploy
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
 const fs = require('fs');
 const path = require('path');
-const multer = require('multer');
 const { OpenAI } = require('openai');
 const Replicate = require('replicate');
+const multer = require('multer');
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 dotenv.config();
@@ -16,14 +15,16 @@ const port = 3000;
 
 app.use(cors());
 app.use(bodyParser.json());
+
+// Servir imágenes generadas y subidas
 app.use('/imagenes', express.static(path.join(__dirname, 'imagenes')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN });
 
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({ dest: 'uploads/' });
 
-// === Ruta: Generar imagen desde texto ===
 app.post('/generate-image', async (req, res) => {
   const { prompt, formato = 'cuadrado', calidad = 'standard' } = req.body;
 
@@ -31,8 +32,7 @@ app.post('/generate-image', async (req, res) => {
   switch (formato) {
     case 'vertical': size = '1024x1792'; break;
     case 'horizontal': size = '1792x1024'; break;
-    case 'cuadrado':
-    default: size = '1024x1024'; break;
+    default: size = '1024x1024';
   }
 
   const calidadFormato = calidad === 'alta' ? 'hd' : 'standard';
@@ -59,7 +59,7 @@ app.post('/generate-image', async (req, res) => {
 
     const imageEntry = {
       prompt,
-      url: `http://localhost:${port}/imagenes/${fileName}`,
+      url: `https://simia-backend-v2.onrender.com/imagenes/${fileName}`,
       formato,
       calidad
     };
@@ -74,34 +74,50 @@ app.post('/generate-image', async (req, res) => {
   }
 });
 
-// === Ruta: Galería de imágenes generadas ===
-app.get('/banco-imagenes', (req, res) => {
-  const bancoPath = path.join(__dirname, 'banco.json');
-  if (!fs.existsSync(bancoPath)) return res.json([]);
-  const data = JSON.parse(fs.readFileSync(bancoPath));
-  res.json(data);
-});
-
-// === Ruta: Mejorar nitidez usando Replicate ===
 app.post('/mejorar-imagen', upload.single('imagen'), async (req, res) => {
   try {
-    const imageBuffer = req.file.buffer;
-    const base64Image = `data:image/jpeg;base64,${imageBuffer.toString('base64')}`;
+    const filePath = req.file.path;
+    const imageUrl = `https://simia-backend-v2.onrender.com/${filePath}`;
 
-    const output = await replicate.run("sczhou/codeformer:8b6dbe1", {
+    const output = await replicate.run("xinntao/real-esrgan", {
       input: {
-        image: base64Image,
-        codeformer_fidelity: 1,
-        face_upsample: true,
-        upscale: 2
+        image: imageUrl,
+        scale: 2,
+        face_enhance: true
       }
     });
 
     res.json({ imageUrl: output });
   } catch (error) {
-    console.error('Error en /mejorar-imagen:', error);
-    res.status(500).json({ error: 'Error al procesar imagen con Replicate' });
+    console.error("Error al mejorar imagen:", error);
+    res.status(500).json({ error: "No se pudo mejorar la imagen." });
   }
+});
+
+app.post('/restaurar-foto', upload.single('imagen'), async (req, res) => {
+  try {
+    const filePath = req.file.path;
+    const imageUrl = `https://simia-backend-v2.onrender.com/${filePath}`;
+
+    const output = await replicate.run("tencentarc/gfpgan", {
+      input: {
+        img: imageUrl,
+        version: "v1.4"
+      }
+    });
+
+    res.json({ imageUrl: output });
+  } catch (error) {
+    console.error("Error al restaurar foto:", error);
+    res.status(500).json({ error: "No se pudo restaurar la foto." });
+  }
+});
+
+app.get('/banco-imagenes', (req, res) => {
+  const bancoPath = path.join(__dirname, 'banco.json');
+  if (!fs.existsSync(bancoPath)) return res.json([]);
+  const data = JSON.parse(fs.readFileSync(bancoPath));
+  res.json(data);
 });
 
 app.listen(port, () => {
