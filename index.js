@@ -1,3 +1,4 @@
+// 🔁 CÓDIGO CORREGIDO DE index.js
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -15,8 +16,6 @@ const port = 3000;
 
 app.use(cors());
 app.use(bodyParser.json());
-
-// Servir imágenes generadas y subidas
 app.use('/imagenes', express.static(path.join(__dirname, 'imagenes')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -76,8 +75,7 @@ app.post('/generate-image', async (req, res) => {
 
 app.post('/mejorar-imagen', upload.single('imagen'), async (req, res) => {
   try {
-    const filePath = req.file.path;
-    const imageUrl = `https://simia-backend-v2.onrender.com/${filePath}`;
+    const imageUrl = `${req.protocol}://${req.get('host')}/${req.file.path.replace(/\\/g, '/')}`;
 
     const output = await replicate.run("xinntao/real-esrgan", {
       input: {
@@ -96,8 +94,7 @@ app.post('/mejorar-imagen', upload.single('imagen'), async (req, res) => {
 
 app.post('/restaurar-foto', upload.single('imagen'), async (req, res) => {
   try {
-    const filePath = req.file.path;
-    const imageUrl = `https://simia-backend-v2.onrender.com/${filePath}`;
+    const imageUrl = `${req.protocol}://${req.get('host')}/${req.file.path.replace(/\\/g, '/')}`;
 
     const output = await replicate.run("tencentarc/gfpgan", {
       input: {
