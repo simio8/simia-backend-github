@@ -1,4 +1,3 @@
-// 🔁 CÓDIGO CORREGIDO DE index.js
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -24,6 +23,7 @@ const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN });
 
 const upload = multer({ dest: 'uploads/' });
 
+// === Generar imagen desde prompt con DALL·E ===
 app.post('/generate-image', async (req, res) => {
   const { prompt, formato = 'cuadrado', calidad = 'standard' } = req.body;
 
@@ -73,18 +73,14 @@ app.post('/generate-image', async (req, res) => {
   }
 });
 
+// === Mejorar nitidez con Real-ESRGAN ===
 app.post('/mejorar-imagen', upload.single('imagen'), async (req, res) => {
   try {
     const imageUrl = `${req.protocol}://${req.get('host')}/${req.file.path.replace(/\\/g, '/')}`;
-
-    const output = await replicate.run("xinntao/real-esrgan", {
-      input: {
-        image: imageUrl,
-        scale: 2,
-        face_enhance: true
-      }
-    });
-
+    const output = await replicate.run(
+      "xinntao/real-esrgan:latest",
+      { input: { image: imageUrl, scale: 2, face_enhance: true } }
+    );
     res.json({ imageUrl: output });
   } catch (error) {
     console.error("Error al mejorar imagen:", error);
@@ -92,17 +88,14 @@ app.post('/mejorar-imagen', upload.single('imagen'), async (req, res) => {
   }
 });
 
+// === Restaurar foto antigua con GFPGAN ===
 app.post('/restaurar-foto', upload.single('imagen'), async (req, res) => {
   try {
     const imageUrl = `${req.protocol}://${req.get('host')}/${req.file.path.replace(/\\/g, '/')}`;
-
-    const output = await replicate.run("tencentarc/gfpgan", {
-      input: {
-        img: imageUrl,
-        version: "v1.4"
-      }
-    });
-
+    const output = await replicate.run(
+      "tencentarc/gfpgan:latest",
+      { input: { img: imageUrl, version: "v1.4" } }
+    );
     res.json({ imageUrl: output });
   } catch (error) {
     console.error("Error al restaurar foto:", error);
@@ -110,6 +103,7 @@ app.post('/restaurar-foto', upload.single('imagen'), async (req, res) => {
   }
 });
 
+// === Galería ===
 app.get('/banco-imagenes', (req, res) => {
   const bancoPath = path.join(__dirname, 'banco.json');
   if (!fs.existsSync(bancoPath)) return res.json([]);
